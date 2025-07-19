@@ -1,2 +1,2 @@
-tijori
+git+https://github.com/PhanindraParashar/tijori.git
 requests
