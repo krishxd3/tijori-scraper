@@ -16,9 +16,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install tijori from source
-        run: pip install tijori-0.1.0.tar.gz
-
+      
 
       - name: Install other dependencies
         run: pip install -r requirements.txt
