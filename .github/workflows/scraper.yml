@@ -16,16 +16,15 @@ jobs:
         with:
           python-version: '3.10'
 
-      
-
       - name: Install other dependencies
         run: pip install -r requirements.txt
 
       - name: Run scraper
         run: python scraper.py
 
-- name: Send scraped data to WordPress
-  run: |
-    curl -X POST -H "Content-Type: application/json" \
-    -d @promoter_buying.json \
-    https://stockminati.com/wp-json/custom/v1/promoter-data/
+      - name: Send scraped data to WordPress
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d @promoter_buying.json \
+          https://stockminati.com/wp-json/custom/v1/promoter-data/
+
