@@ -1,2 +1,2 @@
-git+https://github.com/amitvishv/tijori.git
+tijori 0.1.0
 requests
