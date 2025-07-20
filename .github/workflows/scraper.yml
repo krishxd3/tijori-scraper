@@ -3,7 +3,7 @@ name: Run Promoter Buying Scraper Every 5 Minutes
 on:
   schedule:
     - cron: '*/5 * * * *'  # Try to run every 5 minutes (subject to GitHub limitations)
-  workflow_dispatch:        # Manual trigger
+  workflow_dispatch:
 
 jobs:
   run-scraper:
@@ -25,14 +25,11 @@ jobs:
           sudo apt-get install -y chromium-browser
 
       - name: Setup Chrome Driver permissions
-  run: |
-    sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome || echo "symlink already exists"
-
+        run: |
+          sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome || echo "symlink already exists"
 
       - name: Run scraper
         env:
-          # Ensure Selenium finds the right chrome binary
-          # (Some versions of Chromium/Chrome in GH runners respond to this)
           CHROME_BIN: /usr/bin/chromium-browser
         run: python scraper.py
 
@@ -41,5 +38,6 @@ jobs:
           curl -X POST -H "Content-Type: application/json" \
           -d @promoter_buying.json \
           https://stockminati.com/wp-json/custom/v1/promoter-data/
+
 
 
