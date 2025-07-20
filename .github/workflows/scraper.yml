@@ -25,9 +25,9 @@ jobs:
           sudo apt-get install -y chromium-browser
 
       - name: Setup Chrome Driver permissions
-        run: |
-          sudo ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
-          echo "CHROMEDRIVER_PATH=$(which chromium-browser)" >> $GITHUB_ENV
+  run: |
+    sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome || echo "symlink already exists"
+
 
       - name: Run scraper
         env:
