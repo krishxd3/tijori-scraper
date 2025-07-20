@@ -8,7 +8,6 @@ from datetime import datetime
 import time
 
 def fetch_promoter_buying():
-    # --- Chrome options for headless, bot-resistant mode
     chrome_options = Options()
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--no-sandbox")
@@ -18,40 +17,33 @@ def fetch_promoter_buying():
     chrome_options.add_argument('--disable-extensions')
     chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
 
-    # --- Start Chrome with webdriver-manager
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     url = "https://www.tijorifinance.com/ideas-dashboard/promoter-buying/"
     print(f"Loading {url} ...")
     driver.get(url)
 
-    # --- Wait loop: check every 3 sec, up to max 25s
-    max_wait = 25
-    for waited in range(0, max_wait, 3):
-        time.sleep(3)
-        if "promoter buying" in driver.page_source.lower() or "Promoter Buying" in driver.page_source:
-            print(f"🟢 Detected key text after {waited+3}s.")
-            break
-    else:
-        print("🔴 Table data not detected after wait.")
+    # --- Optionally scroll & wait for lazy-load (some JS tables require this!)
+    time.sleep(4)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(18)  # Total wait ~22s, more than before
 
-    # --- Print a chunk of HTML for debug if needed
-    print("="*20 + " HTML CHUNK " + "="*20)
-    print(driver.page_source[:4000])  # Increase/decrease if needed
-    print("="*20 + " END " + "="*20)
+    # --- Dump a large chunk to logs for debugging!
+    print("="*20, "PAGE HTML PREVIEW", "="*20)
+    print(driver.page_source[:12000])  # Bada chunk for search/debug
+    print("="*60)
 
-    # --- Now parse the table or company card structure
     soup = BeautifulSoup(driver.page_source, "html.parser")
-
     promoter_data = []
 
-    # 🟩 Try main table-based scraping (Be adaptive: sites change structure!)
+    # --- Try table-based scraping (use browser inspect to confirm):
     table = soup.find('table')
     if table:
-        print("🔎 Found TABLE element, using <tr> rows for parsing.")
-        rows = table.find_all('tr')[1:]  # skip header row
+        print("🔎 Found <table> tag, parsing rows...")
+        rows = table.find_all('tr')[1:]  # skip thead/header
         for row in rows:
             cells = row.find_all('td')
+            # Make sure table row is valid and looks like the expected data row
             if len(cells) >= 4:
                 company = cells[0].get_text(strip=True)
                 ticker = cells[1].get_text(strip=True)
@@ -63,12 +55,12 @@ def fetch_promoter_buying():
                     "market_cap": market_cap,
                     "sector": sector
                 })
+        print(f"🟢 Parsed {len(promoter_data)} entries via table <tr>")
     else:
-        # 🟦 Fallback for older card-based layout (may no longer be used)
-        print("No <table> found, trying DIVs fallback...")
-        # Replace the selector below if you inspect new classes!
-        cards = soup.find_all('div', {'class': 'MuiBox-root'})
-        print(f"Found {len(cards)} cards with selector 'MuiBox-root'")
+        # --- Fallback: Try card/div-based block (older layout/backup only)
+        print("🔵 No <table> found, trying fallback card selectors...")
+        cards = soup.find_all('div', {'class': 'MuiBox-root'})  # Update if needed
+        print(f"DEBUG: Found {len(cards)} 'MuiBox-root' cards")
         for card in cards:
             title_elem = card.find('span', {'class': 'MuiTypography-root'})
             if not title_elem: continue
@@ -89,9 +81,10 @@ def fetch_promoter_buying():
                 "market_cap": market_cap,
                 "sector": sector
             })
+        print(f"🟡 Parsed {len(promoter_data)} entries via fallback cards")
 
     driver.quit()
-    print(f"✅ Scraped {len(promoter_data)} promoter buying entries.")
+    print(f"✅ Final scraped {len(promoter_data)} promoter buying entries.")
     return promoter_data
 
 if __name__ == "__main__":
@@ -104,5 +97,6 @@ if __name__ == "__main__":
     with open("promoter_buying.json", "w", encoding="utf-8") as f:
         json.dump(scraped_data, f, indent=2, ensure_ascii=False)
     print(f"✅ Saved {len(results)} promoter buying entries to promoter_buying.json")
+
 
 
