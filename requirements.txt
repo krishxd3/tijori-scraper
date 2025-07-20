@@ -1,4 +1,4 @@
-requests-html
+selenium
+webdriver-manager
 beautifulsoup4
-lxml_html_clean
 

@@ -1,47 +1,54 @@
-from requests_html import HTMLSession
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import json
 from datetime import datetime
+import time
 
 def fetch_promoter_buying():
-    print("Fetching promoter buying data from Tijori Finance...")
-    session = HTMLSession()
-    try:
-        response = session.get("https://www.tijorifinance.com/ideas-dashboard/promoter-buying/")
-        response.html.render(timeout=30, sleep=3)
+    # Set Chrome options for headless mode (no UI)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-        soup = BeautifulSoup(response.html.html, "html.parser")
-        data = []
+    # Start Chrome with WebDriver Manager
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
-        cards = soup.find_all('div', {'class': 'MuiBox-root'})
-        for card in cards:
-            title_elem = card.find('span', {'class': 'MuiTypography-root'})
-            if not title_elem:
-                continue
-            company_name = title_elem.get_text(strip=True)
-            ticker_elem = card.find('span', {'class': 'MuiTypography-caption'})
-            ticker = ticker_elem.get_text(strip=True) if ticker_elem else ""
-            chips = card.find_all("div", {"class": "MuiChip-label"})
-            market_cap = ""
-            sector = ""
-            for chip in chips:
-                label = chip.get_text()
-                if 'cap' in label.lower():
-                    market_cap = label
-                else:
-                    sector = label
+    # Load page and wait for JS to render
+    url = "https://www.tijorifinance.com/ideas-dashboard/promoter-buying/"
+    driver.get(url)
+    time.sleep(5)  # Wait for data to load (increase if needed)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
 
-            data.append({
-                "company": company_name,
-                "ticker": ticker,
-                "market_cap": market_cap,
-                "sector": sector
-            })
+    data = []
+    cards = soup.find_all('div', {'class': 'MuiBox-root'})
+    for card in cards:
+        title_elem = card.find('span', {'class': 'MuiTypography-root'})
+        if not title_elem:
+            continue
+        company_name = title_elem.get_text(strip=True)
+        ticker_elem = card.find('span', {'class': 'MuiTypography-caption'})
+        ticker = ticker_elem.get_text(strip=True) if ticker_elem else ""
+        chips = card.find_all("div", {"class": "MuiChip-label"})
+        market_cap = ""
+        sector = ""
+        for chip in chips:
+            label = chip.get_text()
+            if 'cap' in label.lower():
+                market_cap = label
+            else:
+                sector = label
+        data.append({
+            "company": company_name,
+            "ticker": ticker,
+            "market_cap": market_cap,
+            "sector": sector
+        })
 
-        return data
-    except Exception as e:
-        print("Error during scraping:", str(e))
-        return []
+    driver.quit()
+    return data
 
 if __name__ == "__main__":
     results = fetch_promoter_buying()
@@ -52,5 +59,6 @@ if __name__ == "__main__":
     with open("promoter_buying.json", "w", encoding="utf-8") as f:
         json.dump(scraped_data, f, indent=2, ensure_ascii=False)
     print(f"✅ Saved {len(results)} promoter buying entries to promoter_buying.json")
+
 
 
