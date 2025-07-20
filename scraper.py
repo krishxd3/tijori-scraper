@@ -1,3 +1,4 @@
+from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
@@ -14,7 +15,8 @@ def fetch_promoter_buying():
     chrome_options.add_argument("--disable-dev-shm-usage")
 
     # Start Chrome with WebDriver Manager
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)  # ← INDENTED!
 
     # Load page and wait for JS to render
     url = "https://www.tijorifinance.com/ideas-dashboard/promoter-buying/"
@@ -59,6 +61,3 @@ if __name__ == "__main__":
     with open("promoter_buying.json", "w", encoding="utf-8") as f:
         json.dump(scraped_data, f, indent=2, ensure_ascii=False)
     print(f"✅ Saved {len(results)} promoter buying entries to promoter_buying.json")
-
-
-
