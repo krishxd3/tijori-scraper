@@ -2,8 +2,8 @@ name: Run Promoter Buying Scraper Every 5 Minutes
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # This means every 5 minutes (UTC time)
-  workflow_dispatch:
+    - cron: '*/5 * * * *'  # Try to run every 5 minutes (subject to GitHub limitations)
+  workflow_dispatch:        # Manual trigger
 
 jobs:
   run-scraper:
@@ -14,12 +14,26 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: 3.10
 
-      - name: Install other dependencies
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+
+      - name: Setup Chrome Driver permissions
+        run: |
+          sudo ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
+          echo "CHROMEDRIVER_PATH=$(which chromium-browser)" >> $GITHUB_ENV
+
       - name: Run scraper
+        env:
+          # Ensure Selenium finds the right chrome binary
+          # (Some versions of Chromium/Chrome in GH runners respond to this)
+          CHROME_BIN: /usr/bin/chromium-browser
         run: python scraper.py
 
       - name: Send scraped data to WordPress
@@ -27,4 +41,5 @@ jobs:
           curl -X POST -H "Content-Type: application/json" \
           -d @promoter_buying.json \
           https://stockminati.com/wp-json/custom/v1/promoter-data/
+
 
