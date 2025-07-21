@@ -1,43 +1,4 @@
-name: Run Promoter Buying Scraper Every 5 Minutes
 
-on:
-  schedule:
-    - cron: '*/5 * * * *'  # Try to run every 5 minutes (subject to GitHub limitations)
-  workflow_dispatch:
-
-jobs:
-  run-scraper:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.12
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Install Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser
-
-      - name: Setup Chrome Driver permissions
-        run: |
-          sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome || echo "symlink already exists"
-
-      - name: Run scraper
-        env:
-          CHROME_BIN: /usr/bin/chromium-browser
-        run: python scraper.py
-
-      - name: Send scraped data to WordPress
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-          -d @promoter_buying.json \
-          https://stockminati.com/wp-json/custom/v1/promoter-data/
 
 
 
